@@ -23,13 +23,25 @@ const loginUser = async (req, res, next) => {
 
     const user = await Users.findOne({
       mobileNumber: credentials.mobileNumber,
-    }).select("-pin");
+    });
 
-    if (user && (await user.matchPin(credentials.mobileNumber))) {
+    console.log(user);
+
+    if (user && (await user.matchPin(credentials.pin))) {
+      if (!user?.isActive) {
+        throw customError(
+          401,
+          "Your account has been disabled. Please contact support team."
+        );
+      }
+
+      const userWithoutPin = user?.toObject();
+      delete userWithoutPin.pin;
+
       res.status(200).send({
         message: "Login succesful",
         data: {
-          ...user,
+          ...userWithoutPin,
           token: generateToken(user?._id),
         },
       });
@@ -52,11 +64,11 @@ const registerUser = async (req, res, next) => {
       $or: [{ email }, { mobileNumber }, { nid }],
     });
 
-    if (existingUser.email === email) {
+    if (existingUser?.email === email) {
       throw customError(400, "An account with this email already exists");
-    } else if (existingUser.nid === nid) {
+    } else if (existingUser?.nid === nid) {
       throw customError(400, "An account with this NID already exists");
-    } else if (existingUser.mobileNumber === mobileNumber) {
+    } else if (existingUser?.mobileNumber === mobileNumber) {
       throw customError(
         400,
         "An account with this mobile number already exists"
@@ -69,8 +81,10 @@ const registerUser = async (req, res, next) => {
       throw customError(400, error.message);
     }
 
+    console.log(userInfo);
+
     const newUser = await Users.create(userInfo);
-    const userWithoutPin = newUser.toObject();
+    const userWithoutPin = newUser?.toObject();
     delete userWithoutPin.pin;
 
     const response = {
@@ -94,13 +108,7 @@ const updateUser = async (req, res, next) => {
     const { name, email } = req.body;
     const userId = req.params.id;
 
-    if (!name) {
-      throw customError(400, "Name is required");
-    } else if (!email) {
-      throw customError(400, "Email is required");
-    }
-
-    const updatedUser = Users.updateOne(
+    const updatedUser = await Users.findOneAndUpdate(
       { _id: userId },
       { name, email },
       { new: true }
@@ -109,6 +117,7 @@ const updateUser = async (req, res, next) => {
     if (!updatedUser) {
       throw customError(404, "User not found");
     }
+    console.log(updatedUser);
 
     res.status(200).send({ message: "User info updated" });
   } catch (error) {
@@ -145,28 +154,39 @@ const changePin = async (req, res, next) => {
   }
 };
 
-//@desc approve agent
+//@desc approve agent and block or unblock user
 // POST /api/users/:id/approveagent
 // @access Private - admin only
 
-const approveAgent = async (req, res, next) => {
+const updateUserStatusAndIsActive = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const isAdmin = req.user.role === "admin";
-    const { status } = req.body;
+    const { status, isActive } = req.body;
 
     if (!isAdmin) {
-      throw customError(400, "Unauthorized action");
+      throw customError(401, "Unauthorized action");
     }
-    const user = await Users.findOne({ _id: userId });
+
+    const user = await Users.findById(userId).select("-pin");
     if (!user) {
       throw customError(404, "User not found");
     }
 
-    user.status = status;
+    if (user?.role === "agent" && status) {
+      user.status = status || user.status;
+    }
+    if (typeof isActive !== undefined) {
+      user.isActive = isActive;
+    }
     await user.save();
 
-    res.status(200).send({ message: "Agent approved" });
+    res.status(200).send({
+      message:
+        user?.role === "agent" && status
+          ? "Agent approved"
+          : "User active status updated",
+    });
   } catch (error) {
     next(error);
   }
@@ -176,6 +196,6 @@ module.exports = {
   loginUser,
   registerUser,
   updateUser,
-  approveAgent,
+  updateUserStatusAndIsActive,
   changePin,
 };

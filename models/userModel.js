@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     },
     nid: { type: Number, required: [true, "NID is required"], unique: true },
     pin: {
-      type: Number,
+      type: String,
       required: [true, "Password is required"],
       minlength: [5, "Pin must be 5 digit"],
       maxlength: [5, "Pin must be 5 digit"],

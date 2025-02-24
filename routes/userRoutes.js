@@ -3,14 +3,20 @@ const {
   loginUser,
   registerUser,
   updateUser,
-  approveAgent,
+  changePin,
+  updateUserStatusAndIsActive,
 } = require("../controllers/userControllers");
 const router = express.Router();
 const authenticate = require("../middlewares/authMiddleware");
 
 router.post("/login", loginUser);
 router.post("/register", registerUser);
-router.put("/", authenticate, updateUser);
-router.put("/agentApproval", authenticate, approveAgent);
+router.put("/:id", authenticate, updateUser);
+router.put("/:id/changepin", authenticate, changePin);
+router.put(
+  "/:id/adminonlyuserupdates",
+  authenticate,
+  updateUserStatusAndIsActive
+);
 
 module.exports = router;

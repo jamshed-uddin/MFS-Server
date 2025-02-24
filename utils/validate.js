@@ -2,27 +2,26 @@ const joi = require("joi");
 
 const validateUserInfo = (userInfo) => {
   const schema = joi.object({
-    name: joi.string().required().message({
+    name: joi.string().required().messages({
       "string.empty": "Name is required",
     }),
-    email: joi.string().email().required().message({
+    email: joi.string().email().required().messages({
       "string.email": "Please provide a valid email address",
       "string.empty": "Email is required",
     }),
 
-    mobileNumber: joi.string().required().message({
+    mobileNumber: joi.string().required().messages({
       "string.empty": "Mobile number is required",
     }),
 
-    nid: joi.number().required().message({
+    nid: joi.number().required().messages({
       "number.empty": "NID is required",
     }),
-    pin: joi.number().min(5).max(5).required().message({
-      "number.empty": "Pin is required",
-      "number.min": "Minimum pin length is 5",
-      "number.max": "Maximum pin length is 5",
+    pin: joi.string().length(5).required().messages({
+      "string.empty": "Pin is required",
+      "string.length": "Pin length must be 5 digit",
     }),
-    role: joi.string().valid("user", "agent").required().message({
+    role: joi.string().valid("user", "agent").required().messages({
       "string.empty": "Role is required",
     }),
   });
@@ -31,13 +30,12 @@ const validateUserInfo = (userInfo) => {
 
 const validateLoginCredentials = (credentials) => {
   const schema = joi.object({
-    mobileNumber: joi.string().required().message({
+    mobileNumber: joi.string().required().messages({
       "string.empty": "Mobile number is required",
     }),
-    pin: joi.number().min(5).max(5).required().message({
+    pin: joi.string().length(5).required().messages({
       "number.empty": "Pin is required",
-      "number.min": "Minimum pin length is 5",
-      "number.max": "Maximum pin length is 5",
+      "string.length": "Pin length must be 5 digit",
     }),
   });
 
