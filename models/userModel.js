@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Mobile number is required"],
       unique: true,
     },
+    nid: { type: Number, required: [true, "NID is required"], unique: true },
     pin: {
       type: Number,
       required: [true, "Password is required"],
@@ -47,7 +48,7 @@ userSchema.pre("save", async function (next) {
   this.pin = await bcrypt.hash(this.pin, salt);
 });
 
-userSchema.methods.matchPassword = async function (enteredPin) {
+userSchema.methods.matchPin = async function (enteredPin) {
   return await bcrypt.compare(enteredPin, this.pin);
 };
 
