@@ -1,10 +1,7 @@
 const Users = require("../models/userModel");
 const customError = require("../utils/customError");
 const generateToken = require("../utils/generateToken");
-const {
-  validateUserInfo,
-  validateLoginCredentials,
-} = require("../utils/validate");
+const { validateUserInfo } = require("../utils/validate");
 
 // @desc login user
 // POST /api/users/login
@@ -12,22 +9,21 @@ const {
 
 const loginUser = async (req, res, next) => {
   try {
-    const userCredentials = req.body;
+    const { email, mobileNumber, pin } = req.body;
 
-    const { error, value: credentials } =
-      validateLoginCredentials(userCredentials);
-
-    if (error) {
-      throw customError(400, error?.message);
+    if (!email && !mobileNumber) {
+      throw customError(400, "Email or mobile number is required");
+    } else if (!pin) {
+      throw customError(400, "Pin is required");
     }
 
     const user = await Users.findOne({
-      mobileNumber: credentials.mobileNumber,
+      $or: [{ email }, { mobileNumber }],
     });
 
     console.log(user);
 
-    if (user && (await user.matchPin(credentials.pin))) {
+    if (user && (await user.matchPin(pin))) {
       if (!user?.isActive) {
         throw customError(
           401,
@@ -60,6 +56,12 @@ const registerUser = async (req, res, next) => {
   try {
     const { email, nid, mobileNumber } = req.body;
 
+    const { error, value: userInfo } = validateUserInfo(req.body);
+
+    if (error) {
+      throw customError(400, error.message);
+    }
+
     const existingUser = await Users.findOne({
       $or: [{ email }, { mobileNumber }, { nid }],
     });
@@ -74,14 +76,6 @@ const registerUser = async (req, res, next) => {
         "An account with this mobile number already exists"
       );
     }
-
-    const { error, value: userInfo } = validateUserInfo(req.body);
-
-    if (error) {
-      throw customError(400, error.message);
-    }
-
-    console.log(userInfo);
 
     const newUser = await Users.create(userInfo);
     const userWithoutPin = newUser?.toObject();
@@ -105,11 +99,12 @@ const registerUser = async (req, res, next) => {
 // @access Private
 const getUsers = async (req, res, next) => {
   try {
-    // const isAdmin = req.user?.role === "admin";
+    console.log(req.path);
+    const isAdmin = req.user?.role === "admin";
 
-    // if (!isAdmin) {
-    //   throw customError(401, "Unauthorized action");
-    // }
+    if (!isAdmin) {
+      throw customError(401, "Unauthorized action");
+    }
 
     const { role, activeonly, status } = req.query;
 

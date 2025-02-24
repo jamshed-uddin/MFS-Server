@@ -2,13 +2,13 @@ const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema(
   {
-    senderPhone: {
+    senderMobile: {
       type: String,
-      required: [true, "Sender phone number is required"],
+      required: [true, "Sender mobile number is required"],
     },
-    receiverPhone: {
+    receiverMobile: {
       type: String,
-      required: [true, "Receiver phone number is required"],
+      required: [true, "Receiver mobile number is required"],
     },
     type: {
       type: String,

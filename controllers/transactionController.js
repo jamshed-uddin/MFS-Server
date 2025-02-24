@@ -1,32 +1,48 @@
 const Users = require("../models/userModel");
 const Transactions = require("../models/transactionModel");
 
-const sendMoneyHandler = async (req, res, next) => {
+const getTransactions = async (req, res, next) => {
+  try {
+    res.status(200).send({ message: "Transaction retrieval successful" });
+  } catch (error) {
+    console.log("error from controller", error);
+    next(error);
+  }
+};
+
+const sendMoney = async (req, res, next) => {
   try {
   } catch (error) {
     next(error);
   }
 };
 
-const cashOutHandler = async (req, res, next) => {
+const cashOut = async (req, res, next) => {
   try {
   } catch (error) {
     next(error);
   }
 };
-const cashInHandler = async (req, res, next) => {
+const cashIn = async (req, res, next) => {
   try {
   } catch (error) {
     next(error);
   }
 };
-const cashWithdrawalHandler = async (req, res, next) => {
+const cashWithdrawal = async (req, res, next) => {
   try {
   } catch (error) {
     next(error);
   }
 };
-const cashRechargeHandler = async (req, res, next) => {
+const cashRecharge = async (req, res, next) => {
+  try {
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateTransaction = async (req, res, next) => {
   try {
   } catch (error) {
     next(error);
@@ -34,9 +50,11 @@ const cashRechargeHandler = async (req, res, next) => {
 };
 
 module.exports = {
-  sendMoneyHandler,
-  cashOutHandler,
-  cashInHandler,
-  cashWithdrawalHandler,
-  cashRechargeHandler,
+  getTransactions,
+  sendMoney,
+  cashOut,
+  cashIn,
+  cashWithdrawal,
+  cashRecharge,
+  updateTransaction,
 };
