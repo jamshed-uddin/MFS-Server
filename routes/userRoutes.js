@@ -5,10 +5,11 @@ const {
   updateUser,
   changePin,
   updateUserStatusAndIsActive,
+  getUsers,
 } = require("../controllers/userControllers");
 const router = express.Router();
 const authenticate = require("../middlewares/authMiddleware");
-
+router.get("/", getUsers);
 router.post("/login", loginUser);
 router.post("/register", registerUser);
 router.put("/:id", authenticate, updateUser);

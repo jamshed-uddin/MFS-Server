@@ -100,8 +100,64 @@ const registerUser = async (req, res, next) => {
   }
 };
 
+//@desc  get all users
+// GET /api/users
+// @access Private
+const getUsers = async (req, res, next) => {
+  try {
+    // const isAdmin = req.user?.role === "admin";
+
+    // if (!isAdmin) {
+    //   throw customError(401, "Unauthorized action");
+    // }
+
+    const { role, activeonly, status } = req.query;
+
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 15;
+
+    const allowedRoleFilters = ["user", "agent"];
+    const filter = {
+      role: { $in: allowedRoleFilters },
+    };
+    if (role && allowedRoleFilters.includes(role)) {
+      filter.role = role;
+    }
+
+    if (activeonly) {
+      filter.isActive = true;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+    const allUsers = await Users.find(filter);
+    const totalPage = Math.ceil(allUsers.length / limit);
+    const totalUsers = allUsers.length;
+    const paginatedUsers = await Users.find(filter)
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .sort("-1");
+
+    const response = {
+      message: "User retrieval successful",
+      data: paginatedUsers,
+      pagination: {
+        page,
+        limit,
+        totalPage,
+        totalUsers,
+      },
+    };
+
+    res.status(200).send(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
 //@desc update user
-// POST /api/users/:id
+// PUT /api/users/:id
 // @access Private
 const updateUser = async (req, res, next) => {
   try {
@@ -126,7 +182,7 @@ const updateUser = async (req, res, next) => {
 };
 
 //@desc update user password
-// POST /api/users/:id/changepin
+// PUT /api/users/:id/changepin
 // @access Private
 
 const changePin = async (req, res, next) => {
@@ -155,7 +211,7 @@ const changePin = async (req, res, next) => {
 };
 
 //@desc approve agent and block or unblock user
-// POST /api/users/:id/approveagent
+// PUT /api/users/:id/approveagent
 // @access Private - admin only
 
 const updateUserStatusAndIsActive = async (req, res, next) => {
@@ -193,6 +249,7 @@ const updateUserStatusAndIsActive = async (req, res, next) => {
 };
 
 module.exports = {
+  getUsers,
   loginUser,
   registerUser,
   updateUser,
