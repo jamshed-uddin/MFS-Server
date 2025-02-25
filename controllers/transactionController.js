@@ -144,7 +144,7 @@ const getTransactions = async (req, res, next) => {
 const sendMoney = async (req, res, next) => {
   try {
     const { role: senderRole } = req.user;
-    const { type: transactionType, receiverMobile, amount } = req.body;
+    const { receiverMobile, amount } = req.body;
 
     // check for minimum send money amount
 
@@ -157,19 +157,20 @@ const sendMoney = async (req, res, next) => {
       mobileNumber: receiverMobile,
     }).select("-pin");
 
+    // check for receiver availability.
     if (!receiver) {
       throw customError(404, "Receiver not found");
     }
     const receiverRole = receiver?.role;
 
-    if (
-      transactionType === "send_money" &&
-      senderRole !== "user" &&
-      receiverRole !== "user"
-    ) {
+    console.log("role", senderRole, receiverRole);
+
+    // check to make sure both participent in transaction is user
+    if (senderRole !== "user" || receiverRole !== "user") {
       throw customError(401, "Send money only allowed from user to user");
     }
 
+    // handling transaction creation and balance management
     const newTransaction = await handleTransacAndBalance(req.body);
     res
       .status(200)
@@ -187,6 +188,16 @@ const cashOut = async (req, res, next) => {
 };
 const cashIn = async (req, res, next) => {
   try {
+    const transactionInfo = req.body;
+    const { role: senderRole } = req.user;
+
+    if (senderRole !== "agent") {
+      throw customError(401, "Cash in must be initiated by agent");
+    }
+
+    const cashInTransaction = await handleTransacAndBalance(transactionInfo);
+
+    res.send({ message: "Cash in successful", data: cashInTransaction });
   } catch (error) {
     next(error);
   }
