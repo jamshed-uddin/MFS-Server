@@ -13,8 +13,9 @@ const validateTransacInfoMid = async (req, res, next) => {
     }
 
     const transacInfo = req.body;
-    const { balance, role: senderRole } = req.user;
+    const { balance } = req.user;
 
+    // check if required field is available in request body
     const { error, value: validatedTransacInfo } =
       validateTransactionInfo(transacInfo);
 
@@ -39,23 +40,6 @@ const validateTransacInfoMid = async (req, res, next) => {
       throw customError(400, "Insufficient balance");
     }
 
-    // check for right participent in transaction
-    const receiver = await Users.findOne({
-      mobileNumber: validatedTransacInfo.receiverMobile,
-    }).select("-pin");
-
-    if (!receiver) {
-      throw customError(404, "Receiver not found");
-    }
-    const receiverRole = receiver?.role;
-
-    if (
-      transactionType === "send_money" &&
-      senderRole !== "user" &&
-      receiverRole !== "user"
-    ) {
-      throw customError(401, "Send money only allowed from user to user");
-    }
     next();
   } catch (error) {
     next(error);

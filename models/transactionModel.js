@@ -42,7 +42,7 @@ const transactionSchema = new mongoose.Schema(
       default: function () {
         if (this.type === "cash_out") {
           return +(this.amount * 0.05).toFixed(2);
-        } else if (this.type === "send_money" && this.amount > 100) {
+        } else if (this.type === "send_money" && this.amount >= 100) {
           return 5;
         } else {
           return 0;
