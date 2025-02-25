@@ -99,7 +99,6 @@ const registerUser = async (req, res, next) => {
 // @access Private
 const getUsers = async (req, res, next) => {
   try {
-    console.log(req.path);
     const isAdmin = req.user?.role === "admin";
 
     if (!isAdmin) {
@@ -127,8 +126,9 @@ const getUsers = async (req, res, next) => {
       filter.status = status;
     }
     const allUsers = await Users.find(filter);
-    const totalPage = Math.ceil(allUsers.length / limit);
     const totalUsers = allUsers.length;
+    const totalPage = Math.ceil(totalUsers / limit);
+
     const paginatedUsers = await Users.find(filter)
       .limit(limit)
       .skip((page - 1) * limit)

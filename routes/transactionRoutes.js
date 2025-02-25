@@ -12,7 +12,7 @@ const router = express.Router();
 const authenticate = require("../middlewares/authMiddleware");
 const validateTransacInfoMid = require("../middlewares/validateTransacInfoMid");
 
-// router.use(authenticate);
+router.use(authenticate);
 router.use(validateTransacInfoMid);
 
 router.get("/", getTransactions);
