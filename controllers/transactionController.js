@@ -31,11 +31,11 @@ const handleTransacAndBalance = async (transactionData) => {
           update: { $inc: { balance: -(amount + adminFee + agentFee) } },
         },
       },
-      // add the amount to receiver balance
+      // add the amount to receiver balance (there is agent fee only for cash out. for other transactions it's 0)
       {
         updateOne: {
           filter: { mobileNumber: receiverMobile },
-          update: { $inc: { balance: amount } },
+          update: { $inc: { balance: amount + agentFee } },
         },
       },
     ];
@@ -55,13 +55,6 @@ const handleTransacAndBalance = async (transactionData) => {
             filter: { mobileNumber: admin?.mobileNumber },
             update: { $inc: { balance: adminFee } },
           },
-        },
-        // adding agent fee
-        {
-          updateOne: {
-            filter: { mobileNumber: receiverMobile },
-            update: { $inc: { balance: agentFee } },
-          },
         }
       );
     }
@@ -77,6 +70,9 @@ const handleTransacAndBalance = async (transactionData) => {
   }
 };
 
+// @desc  get all transaction
+// GET /api/transactions
+// @access Private
 const getTransactions = async (req, res, next) => {
   try {
     const { type, status } = req.query;
@@ -141,6 +137,9 @@ const getTransactions = async (req, res, next) => {
   }
 };
 
+// @desc  send money
+// POST /api/transactions/sendmoney
+// @access Private
 const sendMoney = async (req, res, next) => {
   try {
     const { role: senderRole } = req.user;
@@ -180,12 +179,9 @@ const sendMoney = async (req, res, next) => {
   }
 };
 
-const cashOut = async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error);
-  }
-};
+// @desc  cash in
+// POST /api/transactions/cashin
+// @access Private
 const cashIn = async (req, res, next) => {
   try {
     const transactionInfo = req.body;
@@ -202,23 +198,113 @@ const cashIn = async (req, res, next) => {
     next(error);
   }
 };
-const cashWithdrawal = async (req, res, next) => {
+// @desc  cash out
+// POST /api/transactions/cashout
+// @access Private
+const cashOut = async (req, res, next) => {
   try {
-  } catch (error) {
-    next(error);
-  }
-};
-const cashRecharge = async (req, res, next) => {
-  try {
+    const transactionInfo = req.body;
+    const { role: senderRole } = req.user;
+    const receiver = await Users.findOne({
+      mobileNumber: transactionInfo.receiverMobile,
+    }).select("-pin");
+
+    if (senderRole !== "user") {
+      throw customError(401, "Cash out must be initiated by user");
+    }
+
+    if (receiver?.role !== "agent") {
+      throw customError(400, "Cash out to non-agent user is not allowed");
+    }
+
+    const cashOutTransaction = await handleTransacAndBalance(transactionInfo);
+
+    res.status(200).send({
+      message: "Cash out successful",
+      data: cashOutTransaction,
+    });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc  cash withdrawal request from agent
+// POST /api/transactions/withdrawal
+// @access Private
+const cashWithdrawal = async (req, res, next) => {
+  try {
+    const transactionInfo = req.body;
+    const { role: senderRole } = req.user;
+
+    if (senderRole !== "agent") {
+      throw customError(400, "Withdrawal must be initiated by agent");
+    }
+
+    const withdrawalTransac = await Transactions.create(transactionInfo);
+
+    res.status(200).send({
+      message:
+        "Transaction under review. Agent will be notified about approval anytime soon.",
+      data: withdrawalTransac,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc  cash recharge request from agent
+// POST /api/transactions/recharge
+// @access Private
+const cashRecharge = async (req, res, next) => {
+  try {
+    const transactionInfo = req.body;
+    const { role: senderRole } = req.user;
+
+    if (senderRole !== "agent") {
+      throw customError(400, "Balance recharge must be initiated by agent");
+    }
+
+    const rechargeTransac = await Transactions.create(transactionInfo);
+
+    res.status(200).send({
+      message:
+        "Transaction under review. Agent will be notified about approval anytime soon.",
+      data: rechargeTransac,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc withdrawal or recharge approval from admin
+// POST /api/transactions/:id
+// @access Private
 const updateTransaction = async (req, res, next) => {
   try {
     console.log(req.params.id);
-    res.send({ message: "Updated" });
+    const { status } = req.body;
+    const { role } = req.user;
+    const transactionId = req.params.id;
+
+    if (role !== "admin") {
+      throw customError(401, "Unauthorized transaction action");
+    }
+
+    if (!status) {
+      throw customError(400, "Transaction status is required");
+    } else if (!transactionId) {
+      throw customError(400, "Transaction id is required");
+    }
+
+    const approvedTransaction = await Transactions.findOneAndUpdate(
+      { _id: transactionId },
+      { status },
+      { new: true }
+    );
+
+    // do the balance addition and deduction
+
+    res.status(200).send({ message: "Transaction status updated" });
   } catch (error) {
     next(error);
   }

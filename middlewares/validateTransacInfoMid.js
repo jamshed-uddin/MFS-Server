@@ -1,5 +1,6 @@
 const customError = require("../utils/customError");
 const { validateTransactionInfo } = require("../utils/validate");
+const Users = require("../models/userModel");
 
 const validateTransacInfoMid = async (req, res, next) => {
   try {
@@ -12,12 +13,32 @@ const validateTransacInfoMid = async (req, res, next) => {
       return next();
     }
 
-    const transacInfo = req.body;
-    const { balance } = req.user;
+    // let transacInfo = req.body;
+    const { balance, mobileNumber: senderMobile } = req.user;
+
+    // for withdrawal and balance_recharge getting admin mobile number and adding it to the body as it not available in request body
+    if (
+      req.body.type === "withdrawal" ||
+      req.body.type === "balance_recharge"
+    ) {
+      const admin = await Users.findOne({ role: "admin" }).select("-pin");
+
+      if (admin) {
+        if (req.body.type === "withdrawal") {
+          // if it's cash withdrawal for agent the admin is receiver
+          req.body.receiverMobile = admin.mobileNumber;
+        } else if (req.body.type === "balance_recharge") {
+          // when it's balance recharge for agent the admin is sender
+          req.body.senderMobile = admin.mobileNumber;
+          req.body.receiverMobile = senderMobile;
+        }
+      }
+    }
 
     // check if required field is available in request body
-    const { error, value: validatedTransacInfo } =
-      validateTransactionInfo(transacInfo);
+    const { error, value: validatedTransacInfo } = validateTransactionInfo(
+      req.body
+    );
 
     if (error) {
       throw customError(400, error.message);

@@ -50,8 +50,9 @@ const validateTransactionInfo = (transactionInfo) => {
         "any.required": "Type is required",
         "any.only": "Invalid type provided",
       }),
-    amount: joi.number().required().messages({
+    amount: joi.number().min(1).required().messages({
       "any.required": "Amount is required",
+      "number.min": "Amount must be greater than 0",
     }),
   });
 

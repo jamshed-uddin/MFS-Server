@@ -31,7 +31,7 @@ const transactionSchema = new mongoose.Schema(
       type: Number,
       default: function () {
         if (this.type === "cash_out") {
-          return +(this.amount * 0.1).toFixed(2);
+          return +(this.amount * (1 / 100)).toFixed(2);
         } else {
           return 0;
         }
@@ -41,7 +41,7 @@ const transactionSchema = new mongoose.Schema(
       type: Number,
       default: function () {
         if (this.type === "cash_out") {
-          return +(this.amount * 0.05).toFixed(2);
+          return +(this.amount * (0.5 / 100)).toFixed(2);
         } else if (this.type === "send_money" && this.amount >= 100) {
           return 5;
         } else {
