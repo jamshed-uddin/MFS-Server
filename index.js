@@ -5,12 +5,14 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
-const { connectDB } = require("./config/connectDB.JS");
+const connectdb = require("./config/connectdb");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-connectDB();
+// db connect
+connectdb();
+
 app.use(express.json());
 app.use(cors());
 
