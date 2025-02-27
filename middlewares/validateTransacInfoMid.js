@@ -5,7 +5,7 @@ const Users = require("../models/userModel");
 const validateTransacInfoMid = async (req, res, next) => {
   try {
     // excluding the get all transaction and update transaction routes cause they do initiate any transaction.so they don't need to verify transaction info
-    console.log("path", req.path, "method", req.method);
+
     if (
       (req.method === "GET" && req.path === "/") ||
       (req.method === "PUT" && req.path.startsWith("/"))
@@ -24,8 +24,6 @@ const validateTransacInfoMid = async (req, res, next) => {
     ) {
       const admin = await Users.findOne({ role: "admin" }).select("-pin");
 
-      console.log("admin from mid", admin);
-
       if (admin) {
         if (req.body.type === "withdrawal") {
           // if it's cash withdrawal for agent the admin is receiver
@@ -41,7 +39,6 @@ const validateTransacInfoMid = async (req, res, next) => {
       req.body.senderMobile = senderMobile;
     }
 
-    console.log(req.body);
     // check if required field is available in request body
     const { error, value: validatedTransacInfo } = validateTransactionInfo(
       req.body

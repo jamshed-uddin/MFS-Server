@@ -10,7 +10,6 @@ const { validateUserInfo } = require("../utils/validate");
 const loginUser = async (req, res, next) => {
   try {
     const { emailOrMobileNumber, pin } = req.body;
-    console.log(req.body);
 
     if (!emailOrMobileNumber) {
       throw customError(400, "Email or mobile number is required");
@@ -25,8 +24,6 @@ const loginUser = async (req, res, next) => {
         ? { email: emailOrMobileNumber }
         : { mobileNumber: emailOrMobileNumber }
     );
-
-    console.log(user);
 
     if (user && (await user.matchPin(pin))) {
       if (!user?.isActive) {
@@ -92,8 +89,6 @@ const registerUser = async (req, res, next) => {
     };
 
     res.status(200).send({ message: "User registered", data: response });
-
-    console.log(userInfo);
   } catch (error) {
     next(error);
   }
@@ -196,7 +191,6 @@ const updateUser = async (req, res, next) => {
     if (!updatedUser) {
       throw customError(404, "User not found");
     }
-    console.log(updatedUser);
 
     res.status(200).send({ message: "User info updated" });
   } catch (error) {
@@ -277,7 +271,6 @@ const updateUserStatusAndIsActive = async (req, res, next) => {
 const searchUser = async (req, res, next) => {
   try {
     const { q } = req.query;
-    console.log(q);
 
     if (!q) {
       throw customError(400, "Search query is required.");
