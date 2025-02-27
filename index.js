@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
   res.status(200).send({ message: "Server is running" });
 });
 
+// apis
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 
