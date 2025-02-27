@@ -5,13 +5,14 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
-const connectDB = require("./config/connectDB.JS");
+const { connectDB } = require("./config/connectDB.JS");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+connectDB();
 app.use(express.json());
 app.use(cors());
-connectDB();
 
 app.get("/", (req, res) => {
   res.status(200).send({ message: "Server is running" });
