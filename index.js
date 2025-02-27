@@ -1,11 +1,12 @@
 const express = require("express");
-const connectdb = require("./config/connectdb");
+
 const dotenv = require("dotenv");
 dotenv.config();
 const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
+const connectdb = require("./config/connectdb");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
