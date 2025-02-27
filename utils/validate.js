@@ -29,32 +29,34 @@ const validateUserInfo = (userInfo) => {
 };
 
 const validateTransactionInfo = (transactionInfo) => {
-  const schema = joi.object({
-    senderMobile: joi.string().required().messages({
-      "any.required": "Sender mobile number is required",
-    }),
-    receiverMobile: joi.string().required().messages({
-      "any.required": "Receiver mobile number is required",
-    }),
-    type: joi
-      .string()
-      .valid(
-        "send_money",
-        "cash_in",
-        "cash_out",
-        "withdrawal",
-        "balance_recharge"
-      )
-      .required()
-      .messages({
-        "any.required": "Type is required",
-        "any.only": "Invalid type provided",
+  const schema = joi
+    .object({
+      senderMobile: joi.string().required().messages({
+        "any.required": "Sender mobile number is required",
       }),
-    amount: joi.number().min(1).required().messages({
-      "any.required": "Amount is required",
-      "number.min": "Amount must be greater than 0",
-    }),
-  });
+      receiverMobile: joi.string().required().messages({
+        "any.required": "Receiver mobile number is required",
+      }),
+      type: joi
+        .string()
+        .valid(
+          "send_money",
+          "cash_in",
+          "cash_out",
+          "withdrawal",
+          "balance_recharge"
+        )
+        .required()
+        .messages({
+          "any.required": "Type is required",
+          "any.only": "Invalid type provided",
+        }),
+      amount: joi.number().min(1).required().messages({
+        "any.required": "Amount is required",
+        "number.min": "Amount must be greater than 0",
+      }),
+    })
+    .unknown(true);
 
   return schema.validate(transactionInfo);
 };

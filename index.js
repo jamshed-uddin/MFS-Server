@@ -6,6 +6,8 @@ const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const connectDB = require("./config/connectDB.JS");
+const { default: parsePhoneNumberFromString } = require("libphonenumber-js");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(express.json());

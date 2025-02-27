@@ -2,24 +2,29 @@ const Users = require("../models/userModel");
 const customError = require("../utils/customError");
 const generateToken = require("../utils/generateToken");
 const { validateUserInfo } = require("../utils/validate");
-
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
 // @desc login user
 // POST /api/users/login
 // @access Public
 
 const loginUser = async (req, res, next) => {
   try {
-    const { email, mobileNumber, pin } = req.body;
+    const { emailOrMobileNumber, pin } = req.body;
+    console.log(req.body);
 
-    if (!email && !mobileNumber) {
+    if (!emailOrMobileNumber) {
       throw customError(400, "Email or mobile number is required");
     } else if (!pin) {
       throw customError(400, "Pin is required");
     }
 
-    const user = await Users.findOne({
-      $or: [{ email }, { mobileNumber }],
-    });
+    const isEmail = /\S+@\S+\.\S+/.test(emailOrMobileNumber);
+
+    const user = await Users.findOne(
+      isEmail
+        ? { email: emailOrMobileNumber }
+        : { mobileNumber: emailOrMobileNumber }
+    );
 
     console.log(user);
 
@@ -130,6 +135,7 @@ const getUsers = async (req, res, next) => {
     const totalPage = Math.ceil(totalUsers / limit);
 
     const paginatedUsers = await Users.find(filter)
+      .select("-pin")
       .limit(limit)
       .skip((page - 1) * limit)
       .sort("-1");
@@ -146,6 +152,28 @@ const getUsers = async (req, res, next) => {
     };
 
     res.status(200).send(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUser = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+
+    if (!userId) {
+      throw customError(400, "User id is required");
+    }
+
+    const user = await Users.findById(userId).select("-pin");
+
+    if (!user) {
+      throw customError(404, "User not found");
+    }
+
+    res
+      .status(200)
+      .send({ message: "User data retrieval successful", data: user });
   } catch (error) {
     next(error);
   }
@@ -243,6 +271,64 @@ const updateUserStatusAndIsActive = async (req, res, next) => {
   }
 };
 
+//@desc search user
+// PUT /api/users/search?q=''
+// @access Private
+const searchUser = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    console.log(q);
+
+    if (!q) {
+      throw customError(400, "Search query is required.");
+    }
+
+    const isEmail = /\S+@\S+\.\S+/.test(q);
+
+    const user = await Users.find(
+      isEmail
+        ? { email: q }
+        : { mobileNumber: { $regex: new RegExp(q.slice(1), "i") } }
+    ).select("-pin");
+
+    if (!user) {
+      throw customError(404, "User not found");
+    }
+
+    res.status(200).send({ message: "User found", data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc get the total balance of system
+// GET /api/users/systembalance
+// @access Private - admin only
+const getSystemBalance = async (req, res, next) => {
+  try {
+    // Ensure user is an admin
+    // if (req.user.role !== "admin") {
+    //   throw customError(401, "Unauthorized balance query");
+    // }
+
+    // Aggregate total balance
+    const result = await Users.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalBalance: { $sum: "$balance" },
+        },
+      },
+    ]);
+
+    const totalBalance = result[0]?.totalBalance || 0;
+
+    res.status(200).json({ totalBalance });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   loginUser,
@@ -250,4 +336,7 @@ module.exports = {
   updateUser,
   updateUserStatusAndIsActive,
   changePin,
+  searchUser,
+  getSystemBalance,
+  getUser,
 };

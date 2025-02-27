@@ -64,6 +64,7 @@ const handleTransacAndBalance = async (transactionData) => {
     return createdTransaction;
   } catch (error) {
     await mongooseSession.abortTransaction();
+    console.log(error);
     throw customError(400, "Transation failed");
   } finally {
     await mongooseSession.endSession();
@@ -144,6 +145,8 @@ const sendMoney = async (req, res, next) => {
   try {
     const { role: senderRole } = req.user;
     const { receiverMobile, amount } = req.body;
+
+    console.log(req.body);
 
     // check for minimum send money amount
 
@@ -264,6 +267,10 @@ const cashRecharge = async (req, res, next) => {
       throw customError(400, "Balance recharge must be initiated by agent");
     }
 
+    if (transactionInfo.amount > 100000) {
+      throw customError(400, "Maximum recharge amount is 100000");
+    }
+
     const rechargeTransac = await Transactions.create(transactionInfo);
 
     res.status(200).send({
@@ -302,7 +309,32 @@ const updateTransaction = async (req, res, next) => {
       { new: true }
     );
 
+    if (!approvedTransaction) {
+      throw customError(404, "Transaction not found");
+    }
+
     // do the balance addition and deduction
+    const { amount, agentFee, adminFee } = approvedTransaction;
+
+    const bulkOps = [
+      // deduct the amount + fee from sender's balance
+      {
+        updateOne: {
+          filter: { mobileNumber: senderMobile },
+          update: { $inc: { balance: -(amount + adminFee) } },
+        },
+      },
+      // add the amount to receiver balance (there is agent fee only for cash out. for other transactions it's 0)
+      // In case of withdrawal admin will get the admin fee only
+      {
+        updateOne: {
+          filter: { mobileNumber: receiverMobile },
+          update: { $inc: { balance: amount + adminFee } },
+        },
+      },
+    ];
+
+    await Users.bulkWrite(bulkOps);
 
     res.status(200).send({ message: "Transaction status updated" });
   } catch (error) {

@@ -60,6 +60,11 @@ const transactionSchema = new mongoose.Schema(
         }
       },
     },
+    note: {
+      type: String,
+      maxlength: 50,
+      default: "",
+    },
   },
   { timestamps: true }
 );
