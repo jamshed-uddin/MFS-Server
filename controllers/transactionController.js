@@ -64,7 +64,7 @@ const handleTransacAndBalance = async (transactionData) => {
     return createdTransaction;
   } catch (error) {
     await mongooseSession.abortTransaction();
-    console.log(error);
+
     throw customError(400, "Transation failed");
   } finally {
     await mongooseSession.endSession();
@@ -133,7 +133,6 @@ const getTransactions = async (req, res, next) => {
 
     res.status(200).send(response);
   } catch (error) {
-    console.log("error from controller", error);
     next(error);
   }
 };
@@ -145,8 +144,6 @@ const sendMoney = async (req, res, next) => {
   try {
     const { role: senderRole } = req.user;
     const { receiverMobile, amount } = req.body;
-
-    console.log(req.body);
 
     // check for minimum send money amount
 
@@ -164,8 +161,6 @@ const sendMoney = async (req, res, next) => {
       throw customError(404, "Receiver not found");
     }
     const receiverRole = receiver?.role;
-
-    console.log("role", senderRole, receiverRole);
 
     // check to make sure both participent in transaction is user
     if (senderRole !== "user" || receiverRole !== "user") {
@@ -288,7 +283,6 @@ const cashRecharge = async (req, res, next) => {
 // @access Private
 const updateTransaction = async (req, res, next) => {
   try {
-    console.log(req.params.id);
     const { status } = req.body;
     const { role } = req.user;
     const transactionId = req.params.id;
