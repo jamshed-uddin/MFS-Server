@@ -2,7 +2,7 @@ const Users = require("../models/userModel");
 const customError = require("../utils/customError");
 const generateToken = require("../utils/generateToken");
 const { validateUserInfo } = require("../utils/validate");
-const { parsePhoneNumberFromString } = require("libphonenumber-js");
+
 // @desc login user
 // POST /api/users/login
 // @access Public
