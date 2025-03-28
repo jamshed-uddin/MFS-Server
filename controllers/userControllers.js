@@ -101,9 +101,9 @@ const getUsers = async (req, res, next) => {
   try {
     const isAdmin = req.user?.role === "admin";
 
-    if (!isAdmin) {
-      throw customError(401, "Unauthorized action");
-    }
+    // if (!isAdmin) {
+    //   throw customError(401, "Unauthorized action");
+    // }
 
     const { role, activeonly, status } = req.query;
 
@@ -271,6 +271,7 @@ const updateUserStatusAndIsActive = async (req, res, next) => {
 const searchUser = async (req, res, next) => {
   try {
     const { q } = req.query;
+    const userId = req.user._id;
 
     if (!q) {
       throw customError(400, "Search query is required.");
@@ -278,11 +279,12 @@ const searchUser = async (req, res, next) => {
 
     const isEmail = /\S+@\S+\.\S+/.test(q);
 
-    const user = await Users.find(
-      isEmail
+    const user = await Users.find({
+      ...(isEmail
         ? { email: q }
-        : { mobileNumber: { $regex: new RegExp(q.slice(1), "i") } }
-    ).select("-pin");
+        : { mobileNumber: { $regex: new RegExp(q.slice(1), "i") } }),
+      _id: { $ne: userId },
+    }).select("-pin");
 
     if (!user) {
       throw customError(404, "User not found");

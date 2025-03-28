@@ -183,10 +183,14 @@ const sendMoney = async (req, res, next) => {
 const cashIn = async (req, res, next) => {
   try {
     const transactionInfo = req.body;
-    const { role: senderRole } = req.user;
+    const { role: senderRole, status } = req.user;
 
     if (senderRole !== "agent") {
       throw customError(401, "Cash in must be initiated by agent");
+    }
+
+    if (status === "pending") {
+      throw customError(400, "Agent is not approved to make transactions");
     }
 
     const cashInTransaction = await handleTransacAndBalance(transactionInfo);
@@ -232,10 +236,13 @@ const cashOut = async (req, res, next) => {
 const cashWithdrawal = async (req, res, next) => {
   try {
     const transactionInfo = req.body;
-    const { role: senderRole } = req.user;
+    const { role: senderRole, status } = req.user;
 
     if (senderRole !== "agent") {
       throw customError(400, "Withdrawal must be initiated by agent");
+    }
+    if (status === "pending") {
+      throw customError(400, "Agent is not approved to make transactions");
     }
 
     const withdrawalTransac = await Transactions.create(transactionInfo);
@@ -256,10 +263,14 @@ const cashWithdrawal = async (req, res, next) => {
 const cashRecharge = async (req, res, next) => {
   try {
     const transactionInfo = req.body;
-    const { role: senderRole } = req.user;
+    const { role: senderRole, status } = req.user;
 
     if (senderRole !== "agent") {
       throw customError(400, "Balance recharge must be initiated by agent");
+    }
+
+    if (status === "pending") {
+      throw customError(400, "Agent is not approved to make transactions");
     }
 
     if (transactionInfo.amount > 100000) {
@@ -308,7 +319,7 @@ const updateTransaction = async (req, res, next) => {
     }
 
     // do the balance addition and deduction
-    const { amount, agentFee, adminFee } = approvedTransaction;
+    const { amount, adminFee, type } = approvedTransaction;
 
     const bulkOps = [
       // deduct the amount + fee from sender's balance
@@ -327,6 +338,11 @@ const updateTransaction = async (req, res, next) => {
         },
       },
     ];
+
+    // for balance recharge admin is the sender and the sent amount doesn't need to be deducted from admin balance
+    if (type === "balance_recharge") {
+      bulkOps.shift();
+    }
 
     await Users.bulkWrite(bulkOps);
 

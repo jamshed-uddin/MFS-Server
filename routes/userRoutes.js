@@ -14,7 +14,7 @@ const router = express.Router();
 const authenticate = require("../middlewares/authMiddleware");
 
 router.get("/", authenticate, getUsers);
-router.get("/search", searchUser);
+router.get("/search", authenticate, searchUser);
 router.post("/login", loginUser);
 router.post("/register", registerUser);
 router.get("/systembalance", authenticate, getSystemBalance);

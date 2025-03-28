@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["user", "agent", "admin"], default: "user" },
     status: {
       type: String,
-      enum: ["pending", "approved"],
+      enum: ["pending", "approved", "rejected"],
       default: function () {
         return this.role === "agent" ? "pending" : "approved";
       },

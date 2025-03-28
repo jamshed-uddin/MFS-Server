@@ -14,7 +14,7 @@ const validateTransacInfoMid = async (req, res, next) => {
     }
 
     // let transacInfo = req.body;
-    const { balance, mobileNumber: senderMobile } = req.user;
+    const { _id, balance, mobileNumber: senderMobile } = req.user;
 
     // for withdrawal and balance_recharge getting admin mobile number and adding it to the body as it not available in request body
 
@@ -30,7 +30,7 @@ const validateTransacInfoMid = async (req, res, next) => {
           req.body.senderMobile = senderMobile;
           req.body.receiverMobile = admin.mobileNumber;
         } else if (req.body.type === "balance_recharge") {
-          // when it's balance recharge for agent the admin is sender
+          // when it's balance recharge for agent  admin is the sender
           req.body.senderMobile = admin.mobileNumber;
           req.body.receiverMobile = senderMobile;
         }
@@ -53,16 +53,23 @@ const validateTransacInfoMid = async (req, res, next) => {
     const transactionType = validatedTransacInfo.type;
     if (transactionType === "send_money") {
       fee = 5;
-    } else if (
-      transactionType === "cash_out" ||
-      transactionType === "withdrawal"
-    ) {
+    } else if (transactionType === "cash_out") {
       fee = validatedTransacInfo.amount * (1.5 / 100);
+    } else if (transactionType === "withdrawal") {
+      // withdrawal initiated by agent and will cost agent only admin fee which is 0.5%
+      fee = validatedTransacInfo.amount * (0.5 / 100);
     }
     const totalAmount = validatedTransacInfo.amount + fee;
 
     if (balance < totalAmount) {
       throw customError(400, "Insufficient balance");
+    }
+
+    // check for valid pin
+    const user = await Users.findById(_id);
+
+    if (!user || !(await user.matchPin(req.body.pin))) {
+      throw customError(403, "Invalid pin");
     }
 
     next();

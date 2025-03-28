@@ -55,6 +55,10 @@ const validateTransactionInfo = (transactionInfo) => {
         "any.required": "Amount is required",
         "number.min": "Amount must be greater than 0",
       }),
+      pin: joi.string().length(5).required().messages({
+        "any.required": "Pin is required",
+        "string.length": "Pin length must be 5 digit",
+      }),
     })
     .unknown(true);
 
